@@ -1,412 +1,244 @@
 /*==================================================
     RESET
 ==================================================*/
-
 /* Remove browser default spacing */
-
 *,
 *::before,
 *::after{
-
     margin:0;
-
     padding:0;
-
     box-sizing:border-box;
-
 }
-
 
 /*==================================================
     ROOT VARIABLES
 ==================================================*/
-
 /*
     Site-wide color palette.
-
     These variables make it easy to update the
     appearance of the entire website later.
 */
-
 :root{
-
     --background:#070B14;
-
     --background-dark:#04060D;
-
     --text:#F5F7FA;
-
     --text-secondary:#B6C2D1;
-
     --node:#7FD6FF;
-
     --node-glow:#BFEFFF;
-
     --accent:#62FFB0;
-
 }
-
 
 /*==================================================
     HTML / BODY
 ==================================================*/
-
 html{
-
     scroll-behavior:smooth;
-
 }
 
 body{
-
     background:var(--background);
-
     color:var(--text);
-
     font-family:
         "Inter",
         Arial,
         Helvetica,
         sans-serif;
-
     overflow-x:hidden;
-
 }
 
 
 /*==================================================
     LINKS
 ==================================================*/
-
 a{
-
     color:inherit;
-
     text-decoration:none;
-
 }
 
 
 /*==================================================
     HERO SECTION
 ==================================================*/
-
 #hero{
-
     position:relative;
-
     width:100%;
-
     height:100vh;
-
     min-height:700px;
-
     overflow:hidden;
-
     background:var(--background);
-
 }
-
 
 /*==================================================
     CANVAS
 ==================================================*/
-
 /*
     JavaScript draws everything here.
-
     The canvas fills the hero section completely.
 */
-
 #networkCanvas{
-
     position:absolute;
-
     inset:0;
-
     width:100%;
-
     height:100%;
-
     display:block;
-
     z-index:1;
-
 }
 
 
 /*==================================================
     BACKGROUND GRADIENT
 ==================================================*/
-
 /*
     Adds depth behind the animation.
-
     This is a separate layer so we can animate it
     independently later if desired.
 */
-
 #backgroundGradient{
-
     position:absolute;
-
     inset:0;
-
     z-index:2;
-
     background:
-
         radial-gradient(
-
             circle at center,
-
             rgba(35,70,120,.18),
-
             rgba(5,8,16,.15) 45%,
-
             rgba(3,4,8,.70)
-
         );
-
 }
-
 
 /*==================================================
     BACKGROUND GLOW
 ==================================================*/
-
 /*
     Soft glow behind the hero content.
-
-    We may later animate this slowly.
+    May later animate this slowly.
 */
 
 #backgroundGlow{
-
     position:absolute;
-
     inset:0;
-
     z-index:3;
-
     pointer-events:none;
-
     background:
-
         radial-gradient(
-
             circle,
-
             rgba(0,180,255,.12),
-
             transparent 70%
-
         );
-
 }
 
 
 /*==================================================
     FILM GRAIN
 ==================================================*/
-
 /*
     A subtle texture.
-
     Opacity will stay very low.
-
     We may later generate this with JavaScript.
 */
 
 #noiseOverlay{
-
     position:absolute;
-
     inset:0;
-
     z-index:4;
-
     pointer-events:none;
-
     opacity:.025;
-
 }
-
 
 /*==================================================
     HERO CONTENT
 ==================================================*/
-
 #heroContent{
-
     position:relative;
-
     z-index:10;
-
     width:min(900px,90%);
-
     height:100%;
-
     margin:auto;
-
     display:flex;
-
     flex-direction:column;
-
     justify-content:center;
-
     align-items:center;
-
     text-align:center;
-
 }
 
 
 /*==================================================
     MAIN TITLE
 ==================================================*/
-
 #heroTitle{
-
     font-size:clamp(3rem,7vw,6rem);
-
     font-weight:700;
-
     letter-spacing:.08em;
-
     line-height:1.05;
-
     margin-bottom:30px;
-
     color:var(--text);
-
 }
 
 
 /*==================================================
     MISSION STATEMENT
 ==================================================*/
-
 #heroStatement{
-
     max-width:700px;
-
     font-size:clamp(1.15rem,2vw,1.5rem);
-
     line-height:1.8;
-
     color:var(--text-secondary);
-
     margin-bottom:50px;
-
 }
-
 
 /*==================================================
     BUTTON CONTAINER
 ==================================================*/
-
 #heroButtons{
-
     display:flex;
-
     justify-content:center;
-
     align-items:center;
-
     gap:20px;
-
 }
-
 
 /*==================================================
     PRIMARY BUTTON
 ==================================================*/
-
 .primaryButton{
-
-    padding:
-
-        18px
-        36px;
-
+    padding: 18px 36px;
     border:1px solid rgba(255,255,255,.18);
-
     border-radius:999px;
-
     backdrop-filter:blur(8px);
-
     transition:
-
         transform .35s,
-
         background .35s,
-
         border-color .35s;
-
 }
-
 
 .primaryButton:hover{
-
     transform:translateY(-3px);
-
-    background:
-
-        rgba(255,255,255,.06);
-
-    border-color:
-
-        rgba(255,255,255,.40);
-
+    background: rgba(255,255,255,.06);
+    border-color: rgba(255,255,255,.40);
 }
-
 
 /*==================================================
     SCROLL INDICATOR
 ==================================================*/
-
 #scrollIndicator{
-
     position:absolute;
-
     left:50%;
-
     bottom:40px;
-
     transform:translateX(-50%);
-
     width:26px;
-
     height:46px;
-
-    border:
-
-        2px solid rgba(255,255,255,.35);
-
+    border: 2px solid rgba(255,255,255,.35);
     border-radius:18px;
-
     z-index:20;
-
 }
 
-
 #scrollIndicator span{
-
     position:absolute;
-
     left:50%;
-
     top:8px;
-
     width:5px;
-
     height:10px;
-
     border-radius:50%;
-
     background:white;
-
     transform:translateX(-50%);
 
 }
@@ -415,49 +247,32 @@ a{
 /*==================================================
     MAIN CONTENT
 ==================================================*/
-
 main{
-
     position:relative;
-
     background:var(--background-dark);
-
     min-height:100vh;
-
 }
 
 
 /*==================================================
     MOBILE
 ==================================================*/
-
 @media (max-width:768px){
 
     #hero{
-
         min-height:600px;
-
     }
 
     #heroContent{
-
         width:92%;
-
     }
 
     #heroStatement{
-
         line-height:1.6;
-
     }
 
     .primaryButton{
-
-        padding:
-
-            15px
-            28px;
-
+        padding: 15px 28px;
     }
 
 }
