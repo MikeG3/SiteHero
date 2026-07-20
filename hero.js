@@ -237,6 +237,7 @@ const nodes = [];
 const pulses = [];
 const constellations = [];
 const thoughts = [];
+const packets = [];
 
 function createNodes() {
     nodes.length = 0;
@@ -318,7 +319,6 @@ function createThought() {
 /*==================================================
     UPDATE THOUGHTS
 ==================================================*/
-
 function updateThoughts() {
     for (let i = thoughts.length - 1; i >= 0; i--) {
         const thought = thoughts[i];
@@ -363,8 +363,7 @@ function drawConnections() {
             const dy = nodes[i].y - nodes[j].y;
             const distance = Math.sqrt(dx * dx + dy * dy);
 
-            if (distance <
-                config.maxConnectionDistance) {
+            if (distance < config.maxConnectionDistance) {
                 const alpha = 1 - distance / config.maxConnectionDistance;
                 const mx = (nodes[i].x + nodes[j].x) / 2;
                 const my = (nodes[i].y + nodes[j].y) / 2;
@@ -384,6 +383,14 @@ function drawConnections() {
                     createPulse(nodes[i], nodes[j]);
                 }
             }
+
+            if (Math.random() < 0.00002 &&
+                packets.length < 20) {
+                packets.push(
+                    new Packet(nodes[i], nodes[j])
+                );
+            }
+
         }
     }
 }
@@ -452,6 +459,44 @@ function updateCamera() {
 }
 
 /*==================================================
+    ENERGY PACKETS
+==================================================*/
+class Packet {
+
+    constructor(start, end) {
+        this.start = start;
+        this.end = end;
+        this.progress = 0;
+        this.speed = 0.004 + Math.random() * 0.004;
+        this.size = 1.5 + Math.random() * 1.5;
+        this.life = 1;
+    }
+
+    update() {
+        this.progress += this.speed;
+        if (this.progress >= 1)
+            this.life = 0;
+    }
+
+    draw() {
+        const x = this.start.x + (this.end.x - this.start.x) * this.progress;
+        const y = this.start.y + (this.end.y - this.start.y) * this.progress;
+        const glow = ctx.createRadialGradient(x, y, 0, x, y, this.size * 8);
+        glow.addColorStop(0, "rgba(255,255,255,.95)");
+        glow.addColorStop(.4, "rgba(170,240,255,.8)");
+        glow.addColorStop(1, "rgba(170,240,255,0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(x, y, this.size * 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "white";
+        ctx.beginPath();
+        ctx.arc(x, y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+/*==================================================
     ANIMATION LOOP
 ==================================================*/
 function animate() {
@@ -464,6 +509,14 @@ function animate() {
         createConstellation();
     }
     drawConnections();
+    //Energy Packets
+    for (let i = packets.length - 1; i >= 0; i--) {
+        packets[i].update();
+        packets[i].draw();
+
+        if (packets[i].life <= 0)
+            packets.splice(i, 1);
+    }
     drawPulses();
     drawConstellations();
 
