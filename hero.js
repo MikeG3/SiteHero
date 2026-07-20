@@ -43,11 +43,12 @@ const ctx = canvas.getContext("2d");
 const config =
 {
     //NODES
-    nodeCount: 10,                   //Curently Not Configured
     maxConnectionDistance: 170,
     nodeRadius: 2.3,
     maxSpeed: 0.18,
     glowRadius: 10,
+    //Network Density
+    nodeSpacing: 90,
 
     //MOUSE INTERACTION
     mouseForce: 0.8,
@@ -294,11 +295,11 @@ const packets = [];
 const nebulae = [];
 
 function createNodes() {
+
     nodes.length = 0;
 
-    // Create a balanced distribution.
-    const columns = 10;
-    const rows = 9;
+    const columns = Math.max(4, Math.floor(canvas.width / config.nodeSpacing));
+    const rows = Math.max(4, Math.floor(canvas.height / config.nodeSpacing));
     const cellWidth = canvas.width / columns;
     const cellHeight = canvas.height / rows;
 
@@ -306,7 +307,6 @@ function createNodes() {
         for (let column = 0; column < columns; column++) {
             const x = column * cellWidth + Math.random() * cellWidth;
             const y = row * cellHeight + Math.random() * cellHeight;
-
             nodes.push(new Node(x, y));
         }
     }
@@ -449,7 +449,7 @@ function drawConnections() {
 
             if (Math.random() < config.packetChance &&
                 packets.length < 20) {
-                packets.push( new Packet(nodes[i], nodes[j]) );
+                packets.push(new Packet(nodes[i], nodes[j]));
             }
 
         }
