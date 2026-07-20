@@ -33,6 +33,10 @@ const canvas = document.getElementById("networkCanvas");
 // Get the 2D drawing context. - CTX = CONTEXT
 const ctx = canvas.getContext("2d");
 
+/*===================================================================================
+            OBJECT LITERALS - NOT A CLASS, SINGLE INSTANCE ONJECT
+====================================================================================*/
+
 /*==================================================
     MOUSE
 ==================================================*/
@@ -55,33 +59,63 @@ const camera =
 };
 
 /*==================================================
-    CONFIGURATION
+    CONFIGURATION - VISUAL TUNING PARAMETERS
 ==================================================*/
 const config =
 {
-    nodeCount: 10,
+    //NODES
+    nodeCount: 10,                   //Curently Not Configured
     maxConnectionDistance: 170,
     nodeRadius: 2.3,
     maxSpeed: 0.18,
     glowRadius: 10,
+
+    //MOUSE INTERACTION
     mouseForce: 0.8,
-    mouseSpeedBoost: 6.2
+    mouseSpeedBoost: 6.2,
+
+    /* IMPLEMENT THESE REFERENCES */
+
+    /* Nebula */
+    nebulaCount: 8,
+    nebulaMinRadius: 250,
+    nebulaMaxRadius: 600,
+    opacity1: 0.1,
+    opacity2: 0.018,
+    nebulaPulse: 0.15,
+    nebulaDrift: 0.03,
+
+    /* Camera */
+    cameraAmplitudeX: 8,
+    cameraAmplitudeY: 6,
+    cameraSpeedX: 0.00008,
+    cameraSpeedY: 0.00006,
+
+
+    /* Constellations */
+    constellationChance: 0.0010,
+    constellationLifetime: 400,
+
+    /* PULSES */
+    pulseChance:0.0008,
+
+    /* Network */
+    connectionBrightness: 0.55
 };
 
 /*==================================================
     NEBULA CLASS
 ==================================================*/
-
 class Nebula {
 
     constructor() {
         this.x = Math.random() * window.innerWidth;
         this.y = Math.random() * window.innerHeight;
-        this.radius = 250 + Math.random() * 450;
+        this.radius = config.nebulaMinRadius + Math.random() * (config.nebulaMaxRadius - config.nebulaMinRadius);
         this.phase = Math.random() * Math.PI * 2;
         this.speed = 0.001 + Math.random() * 0.002;
-        this.driftX = (Math.random() - 0.5) * 0.03;
-        this.driftY = (Math.random() - 0.5) * 0.03;
+        this.driftX = (Math.random() - 0.5) * config.nebulaDrift;
+        this.driftY = (Math.random() - 0.5) * config.nebulaDrift;
         this.color = Math.floor(Math.random() * 3);
     }
 
@@ -100,7 +134,7 @@ class Nebula {
     }
 
     draw() {
-        const pulse = 0.65 + Math.sin(this.phase) * 0.15;
+        const pulse = 0.65 + Math.sin(this.phase) * config.nebulaPulse;
         let r, g, b;
         switch (this.color) {
             case 0:
@@ -120,8 +154,8 @@ class Nebula {
         }
         const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
         //NEBULA COLOR AND OPACITY VALUES
-        gradient.addColorStop(0, `rgba(${r},${g},${b},${0.1 * pulse})`);
-        gradient.addColorStop(0.45, `rgba(${r},${g},${b},${0.018 * pulse})`);
+        gradient.addColorStop(0, `rgba(${r},${g},${b},${config.opacity1 * pulse})`);
+        gradient.addColorStop(0.45, `rgba(${r},${g},${b},${config.opacity2 * pulse})`);
         gradient.addColorStop(1, "rgba(0,0,0,0)");
         ctx.fillStyle = gradient;
         ctx.beginPath();
@@ -285,7 +319,7 @@ function createNodes() {
 ==================================================*/
 function createNebulae() {
     nebulae.length = 0;
-    for (let i = 0; i < 8; i++)
+    for (let i = 0; i < config.nebulaCount; i++)
         nebulae.push(new Nebula());
 }
 
