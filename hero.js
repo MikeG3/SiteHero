@@ -69,6 +69,69 @@ const config =
     mouseSpeedBoost: 6.2
 };
 
+/*==================================================
+    NEBULA CLASS
+==================================================*/
+
+class Nebula {
+
+    constructor() {
+        this.x = Math.random() * window.innerWidth;
+        this.y = Math.random() * window.innerHeight;
+        this.radius = 250 + Math.random() * 450;
+        this.phase = Math.random() * Math.PI * 2;
+        this.speed = 0.001 + Math.random() * 0.002;
+        this.driftX = (Math.random() - 0.5) * 0.03;
+        this.driftY = (Math.random() - 0.5) * 0.03;
+        this.color = Math.floor(Math.random() * 3);
+    }
+
+    update() {
+        this.phase += this.speed;
+        this.x += this.driftX;
+        this.y += this.driftY;
+        if (this.x < -this.radius)
+            this.x = canvas.width + this.radius;
+        if (this.x > canvas.width + this.radius)
+            this.x = -this.radius;
+        if (this.y < -this.radius)
+            this.y = canvas.height + this.radius;
+        if (this.y > canvas.height + this.radius)
+            this.y = -this.radius;
+    }
+
+    draw() {
+        const pulse = 0.65 + Math.sin(this.phase) * 0.15;
+        let r, g, b;
+        switch (this.color) {
+            case 0:
+                r = 40;
+                g = 140;
+                b = 255;
+                break;
+            case 1:
+                r = 70;
+                g = 220;
+                b = 255;
+                break;
+            default:
+                r = 90;
+                g = 120;
+                b = 255;
+        }
+        const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
+        //NEBULA COLOR AND OPACITY VALUES
+        gradient.addColorStop(0, `rgba(${r},${g},${b},${0.1 * pulse})`);
+        gradient.addColorStop(0.45, `rgba(${r},${g},${b},${0.018 * pulse})`);
+        gradient.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2
+        );
+        ctx.fill();
+    }
+}
+
 
 /*==================================================
     NODE CLASS
@@ -154,27 +217,14 @@ class Node {
 
         // Outer glow
         let gradient =
-            ctx.createRadialGradient(
-                drawX,
-                drawY,
-                0,
-                drawX,
-                drawY,
-                glowRadius
-            );
+            ctx.createRadialGradient(drawX, drawY, 0, drawX, drawY, glowRadius);
 
         gradient.addColorStop(0, `rgba(180,235,255,${(0.25 + mouseGlow * 0.25) * this.brightness})`);
         gradient.addColorStop(1, "rgba(180,235,255,0)");
 
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.arc(
-            drawX,
-            drawY,
-            glowRadius,
-            0,
-            Math.PI * 2
-        );
+        ctx.arc(drawX, drawY, glowRadius, 0, Math.PI * 2);
         ctx.fill();
 
         //Draw Constellation
@@ -183,47 +233,19 @@ class Node {
             this.constellationGlow = 0;
 
         // Inner glow
-        gradient =
-            ctx.createRadialGradient(
-                drawX,
-                drawY,
-                0,
-
-                drawX,
-                drawY,
-                glowRadius * 0.45
-
-            );
-
+        gradient = ctx.createRadialGradient(drawX, drawY, 0, drawX, drawY, glowRadius * 0.45);
         gradient.addColorStop(0, `rgba(255,255,255,${0.20 * this.brightness})`);
-
         gradient.addColorStop(1, "rgba(255,255,255,0)");
 
         ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.arc(
-            drawX,
-            drawY,
-            glowRadius * 0.45,
-            0,
-            Math.PI * 2
-        );
-
+        ctx.arc(drawX, drawY, glowRadius * 0.45, 0, Math.PI * 2);
         ctx.fill();
 
         // Core
         ctx.fillStyle = `rgb(${brightness}, 252, 255)`;
-
         ctx.beginPath();
-
-        ctx.arc(
-            drawX,
-            drawY,
-            coreRadius,
-            0,
-            Math.PI * 2
-        );
-
+        ctx.arc(drawX, drawY, coreRadius, 0, Math.PI * 2);
         ctx.fill();
     }
 
@@ -238,6 +260,7 @@ const pulses = [];
 const constellations = [];
 const thoughts = [];
 const packets = [];
+const nebulae = [];
 
 function createNodes() {
     nodes.length = 0;
@@ -256,6 +279,15 @@ function createNodes() {
             nodes.push(new Node(x, y));
         }
     }
+}
+
+/*==================================================
+    CREATE NEBULA
+==================================================*/
+function createNebulae() {
+    nebulae.length = 0;
+    for (let i = 0; i < 8; i++)
+        nebulae.push(new Nebula());
 }
 
 /*==================================================
@@ -501,10 +533,19 @@ class Packet {
 ==================================================*/
 function animate() {
     updateCamera();
+    /* Thoughts at random cycles */
+    /*
     if (Math.random() < 0.002)
         createThought();
+    */
     updateThoughts();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    /* Draw Nebula */
+    for (const nebula of nebulae) {
+        nebula.update();
+        nebula.draw();
+    }
+    /* Draw Constellation */
     if (Math.random() < 0.004) {
         createConstellation();
     }
@@ -556,6 +597,7 @@ function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     createNodes();
+    createNebulae();
 }
 
 window.addEventListener(
