@@ -27,11 +27,10 @@
 /*==================================================
     CANVAS SETUP
 ==================================================*/
-
 // Get the canvas element from the HTML.
 const canvas = document.getElementById("networkCanvas");
 
-// Get the 2D drawing context.
+// Get the 2D drawing context. - CTX = CONTEXT
 const ctx = canvas.getContext("2d");
 
 /*==================================================
@@ -534,7 +533,7 @@ class Packet {
 function animate() {
     updateCamera();
     /* Thoughts at random cycles */
-    /*
+    /* TEMP REMOVE THOUGHTS - Maybe trigger them with clicks
     if (Math.random() < 0.002)
         createThought();
     */
