@@ -49,12 +49,12 @@ const mouse =
 ==================================================*/
 const config =
 {
-    nodeCount: 90,
+    nodeCount: 10,
     maxConnectionDistance: 170,
     nodeRadius: 2.3,
     maxSpeed: 0.18,
     glowRadius: 10,
-    mouseForce: 0.5,
+    mouseForce: 0.8,
     mouseSpeedBoost: 6.2
 };
 
@@ -72,12 +72,13 @@ class Node {
         this.vy = (Math.random() - 0.5) * config.maxSpeed;
 
         // Every node gets a tiny size variation
-        this.radius = config.nodeRadius + Math.random() * 1.4;
+        this.radius = (config.nodeRadius + Math.random() * 1.4) * this.depth;
 
         this.phase = Math.random() * Math.PI * 2;
         this.direction = Math.random() * Math.PI * 2;
         this.turnSpeed = (Math.random() - 0.5) * 0.004;
         this.brightness = .8 + Math.random() * .2;
+        this.depth = 0.5 + Math.random();
     }
 
     update() {
@@ -93,7 +94,7 @@ class Node {
         // Distance to mouse
         // -------------------------------------------------
         // Base drifting motion.
-        let speed = config.maxSpeed * (1 + mouseGlow * config.mouseSpeedBoost);
+        let speed = config.maxSpeed * this.depth * (1 + mouseGlow * config.mouseSpeedBoost);
         this.vx = Math.cos(this.direction) * speed;
         this.vy = Math.sin(this.direction) * speed;
 
@@ -129,12 +130,12 @@ class Node {
         //Calculate distances and mouseGlow
         // Distance to mouse.
         const mouseGlow = getMouseInfluence(this.x, this.y);
-
-        const brightness = 220 + mouseGlow * 35;
+        const constellationGlow=this.constellationGlow||0;
+        const brightness= 220 + mouseGlow*35 + constellationGlow*35;
 
         // Node pulse.
         const pulse = (Math.sin(this.phase) + Math.sin(this.phase * 0.63)) * 0.25 + 0.5;
-        const glowRadius = config.glowRadius + pulse * 3 + mouseGlow * 8;
+        const glowRadius= config.glowRadius + pulse*3 + mouseGlow*8 + constellationGlow*10;
         const coreRadius = this.radius + pulse * 0.4;
 
         // Outer glow
@@ -161,6 +162,11 @@ class Node {
             Math.PI * 2
         );
         ctx.fill();
+
+        //Draw Constellation
+        this.constellationGlow*=0.95;
+        if(this.constellationGlow<0.01)
+            this.constellationGlow=0;
 
         // Inner glow
         gradient =
@@ -214,6 +220,8 @@ class Node {
     CREATE NETWORK
 ==================================================*/
 const nodes = [];
+const pulses = [];
+const constellations = [];
 
 function createNodes() {
     nodes.length = 0;
@@ -234,6 +242,51 @@ function createNodes() {
     }
 }
 
+/*==================================================
+    CREATE ENERGY PULSE
+==================================================*/
+function createPulse(startNode,endNode)
+{
+    pulses.push(
+    {
+        start:startNode,
+        end:endNode,
+        progress:0,
+        speed:0.004+Math.random()*0.006
+    });
+}
+
+/*==================================================
+    CREATE CONSTELLATION
+==================================================*/
+
+function createConstellation()
+{
+    if(nodes.length==0)
+        return;
+
+    const center=nodes[Math.floor(Math.random()*nodes.length)];
+    const group=[];
+
+    for(const node of nodes)
+    {
+        const dx=node.x-center.x;
+        const dy=node.y-center.y;
+
+        if(Math.sqrt(dx*dx+dy*dy)<180)
+            group.push(node);
+    }
+
+    if(group.length<5)
+        return;
+
+    constellations.push(
+    {
+        nodes:group,
+        age:0,
+        duration:220+Math.random()*120
+    });
+}
 
 /*==================================================
     DRAW CONNECTIONS
@@ -251,16 +304,21 @@ function drawConnections() {
                 const mx = (nodes[i].x + nodes[j].x) / 2;
                 const my = (nodes[i].y + nodes[j].y) / 2;
                 const mouseInfluence = getMouseInfluence(mx, my);
-                const opacity = alpha * (0.35 + mouseInfluence * 0.45);
+                const depth = (nodes[i].depth + nodes[j].depth) * 0.5;
+                const opacity = alpha * depth * (0.28 + mouseInfluence * 0.45);
                 const blue = 220 + mouseInfluence * 35;
                 const green = 220 + mouseInfluence * 20;
 
                 ctx.strokeStyle = `rgba(120,${green},${blue},${opacity})`;
-                ctx.lineWidth = 0.2 + alpha * 1.2 + mouseInfluence * 1.4;
+                ctx.lineWidth = 0.15 + depth * 0.8 + alpha * 0.9 + mouseInfluence * 1.2;
                 ctx.beginPath();
                 ctx.moveTo(nodes[i].x, nodes[i].y);
                 ctx.lineTo(nodes[j].x, nodes[j].y);
                 ctx.stroke();
+                if(Math.random()<0.00018)
+                    {
+                        createPulse(nodes[i],nodes[j]);
+                    }
             }
         }
     }
@@ -268,12 +326,76 @@ function drawConnections() {
 
 
 /*==================================================
+    DRAW ENERGY PULSES
+==================================================*/
+function drawPulses()
+{
+    for(let i=pulses.length-1;i>=0;i--)
+    {
+        const pulse=pulses[i];
+        pulse.progress+=pulse.speed;
+        if(pulse.progress>=1)
+        {
+            pulses.splice(i,1);
+            continue;
+        }
+        const x= pulse.start.x + (pulse.end.x-pulse.start.x)*pulse.progress;
+        const y= pulse.start.y+ (pulse.end.y-pulse.start.y)*pulse.progress;
+        const glow= ctx.createRadialGradient( x, y, 0, x, y, 12 );
+        glow.addColorStop(0,"rgba(255,255,255,.95)");
+        glow.addColorStop(.35,"rgba(150,240,255,.8)");
+        glow.addColorStop(1,"rgba(150,240,255,0)");
+        ctx.fillStyle=glow;
+        ctx.beginPath();
+        ctx.arc(x,y,12,0,Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle="white";
+        ctx.beginPath();
+        ctx.arc(x,y,2.2,0,Math.PI*2);
+        ctx.fill();
+    }
+}
+
+/*==================================================
+    DRAW CONSTELLATIONS
+==================================================*/
+function drawConstellations()
+{
+    for(let i=constellations.length-1;i>=0;i--)
+    {
+        const c=constellations[i];
+        c.age++;
+        if(c.age>c.duration)
+        {
+            constellations.splice(i,1);
+            continue;
+        }
+        const fade=
+            Math.sin(
+                c.age/c.duration*Math.PI
+            );
+        for(const node of c.nodes)
+        {
+            node.constellationGlow=Math.max(
+                node.constellationGlow||0,
+                fade
+            );
+        }
+    }
+}
+
+/*==================================================
     ANIMATION LOOP
 ==================================================*/
 function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+    if(Math.random()<0.004)
+        {
+            createConstellation();
+        }
     drawConnections();
+    drawPulses();
+    drawConstellations();
 
     for (const node of nodes) {
         node.update();
