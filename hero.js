@@ -45,6 +45,17 @@ const mouse =
 };
 
 /*==================================================
+    CAMERA
+==================================================*/
+const camera =
+{
+    x: 0,
+    y: 0,
+    vx: 0.04,
+    vy: 0.015
+};
+
+/*==================================================
     CONFIGURATION
 ==================================================*/
 const config =
@@ -72,13 +83,13 @@ class Node {
         this.vy = (Math.random() - 0.5) * config.maxSpeed;
 
         // Every node gets a tiny size variation
+        this.depth = 0.5 + Math.random();
         this.radius = (config.nodeRadius + Math.random() * 1.4) * this.depth;
 
         this.phase = Math.random() * Math.PI * 2;
         this.direction = Math.random() * Math.PI * 2;
         this.turnSpeed = (Math.random() - 0.5) * 0.004;
         this.brightness = .8 + Math.random() * .2;
-        this.depth = 0.5 + Math.random();
     }
 
     update() {
@@ -126,26 +137,29 @@ class Node {
     }
 
     draw() {
+        //Camera Coordinates
+        const drawX = this.x - camera.x;
+        const drawY = this.y - camera.y;
 
         //Calculate distances and mouseGlow
         // Distance to mouse.
-        const mouseGlow = getMouseInfluence(this.x, this.y);
-        const constellationGlow=this.constellationGlow||0;
-        const brightness= 220 + mouseGlow*35 + constellationGlow*35;
+        const mouseGlow = getMouseInfluence(drawX, drawY);
+        const constellationGlow = this.constellationGlow || 0;
+        const brightness = 220 + mouseGlow * 35 + constellationGlow * 35;
 
         // Node pulse.
         const pulse = (Math.sin(this.phase) + Math.sin(this.phase * 0.63)) * 0.25 + 0.5;
-        const glowRadius= config.glowRadius + pulse*3 + mouseGlow*8 + constellationGlow*10;
+        const glowRadius = config.glowRadius + pulse * 3 + mouseGlow * 8 + constellationGlow * 10;
         const coreRadius = this.radius + pulse * 0.4;
 
         // Outer glow
         let gradient =
             ctx.createRadialGradient(
-                this.x,
-                this.y,
+                drawX,
+                drawY,
                 0,
-                this.x,
-                this.y,
+                drawX,
+                drawY,
                 glowRadius
             );
 
@@ -155,8 +169,8 @@ class Node {
         ctx.fillStyle = gradient;
         ctx.beginPath();
         ctx.arc(
-            this.x,
-            this.y,
+            drawX,
+            drawY,
             glowRadius,
             0,
             Math.PI * 2
@@ -164,19 +178,19 @@ class Node {
         ctx.fill();
 
         //Draw Constellation
-        this.constellationGlow*=0.95;
-        if(this.constellationGlow<0.01)
-            this.constellationGlow=0;
+        this.constellationGlow *= 0.95;
+        if (this.constellationGlow < 0.01)
+            this.constellationGlow = 0;
 
         // Inner glow
         gradient =
             ctx.createRadialGradient(
-                this.x,
-                this.y,
+                drawX,
+                drawY,
                 0,
 
-                this.x,
-                this.y,
+                drawX,
+                drawY,
                 glowRadius * 0.45
 
             );
@@ -188,8 +202,8 @@ class Node {
         ctx.fillStyle = gradient;
         ctx.beginPath();
         ctx.arc(
-            this.x,
-            this.y,
+            drawX,
+            drawY,
             glowRadius * 0.45,
             0,
             Math.PI * 2
@@ -203,8 +217,8 @@ class Node {
         ctx.beginPath();
 
         ctx.arc(
-            this.x,
-            this.y,
+            drawX,
+            drawY,
             coreRadius,
             0,
             Math.PI * 2
@@ -222,6 +236,7 @@ class Node {
 const nodes = [];
 const pulses = [];
 const constellations = [];
+const thoughts = [];
 
 function createNodes() {
     nodes.length = 0;
@@ -245,47 +260,97 @@ function createNodes() {
 /*==================================================
     CREATE ENERGY PULSE
 ==================================================*/
-function createPulse(startNode,endNode)
-{
+function createPulse(startNode, endNode) {
     pulses.push(
-    {
-        start:startNode,
-        end:endNode,
-        progress:0,
-        speed:0.004+Math.random()*0.006
-    });
+        {
+            start: startNode,
+            end: endNode,
+            progress: 0,
+            speed: 0.004 + Math.random() * 0.006
+        });
 }
 
 /*==================================================
     CREATE CONSTELLATION
 ==================================================*/
-
-function createConstellation()
-{
-    if(nodes.length==0)
+function createConstellation() {
+    if (nodes.length == 0)
         return;
 
-    const center=nodes[Math.floor(Math.random()*nodes.length)];
-    const group=[];
+    const center = nodes[Math.floor(Math.random() * nodes.length)];
+    const group = [];
 
-    for(const node of nodes)
-    {
-        const dx=node.x-center.x;
-        const dy=node.y-center.y;
+    for (const node of nodes) {
+        const dx = node.x - center.x;
+        const dy = node.y - center.y;
 
-        if(Math.sqrt(dx*dx+dy*dy)<180)
+        if (Math.sqrt(dx * dx + dy * dy) < 180)
             group.push(node);
     }
 
-    if(group.length<5)
+    if (group.length < 5)
         return;
 
     constellations.push(
-    {
-        nodes:group,
-        age:0,
-        duration:220+Math.random()*120
+        {
+            nodes: group,
+            age: 0,
+            duration: 220 + Math.random() * 120
+        });
+}
+
+/*==================================================
+    CREATE THOUGHT
+==================================================*/
+function createThought() {
+    if (nodes.length === 0)
+        return;
+    thoughts.push({
+        frontier: [
+            nodes[Math.floor(Math.random() * nodes.length)]
+        ],
+        visited: new Set(),
+        timer: 0,
+        interval: 10
     });
+}
+
+/*==================================================
+    UPDATE THOUGHTS
+==================================================*/
+
+function updateThoughts() {
+    for (let i = thoughts.length - 1; i >= 0; i--) {
+        const thought = thoughts[i];
+        thought.timer++;
+        if (thought.timer < thought.interval)
+            continue;
+        thought.timer = 0;
+        const next = [];
+        for (const node of thought.frontier) {
+            if (thought.visited.has(node))
+                continue;
+            thought.visited.add(node);
+            node.constellationGlow = 2.4;
+            for (const other of nodes) {
+
+                if (other === node)
+                    continue;
+
+                const dx = node.x - other.x;
+                const dy = node.y - other.y;
+                if (Math.sqrt(dx * dx + dy * dy)
+                    < config.maxConnectionDistance) {
+                    createPulse(node, other);
+                    if (Math.random() < 0.45)
+                        next.push(other);
+                }
+            }
+        }
+        thought.frontier = next;
+        if (next.length === 0)
+            thoughts.splice(i, 1);
+    }
 }
 
 /*==================================================
@@ -312,13 +377,12 @@ function drawConnections() {
                 ctx.strokeStyle = `rgba(120,${green},${blue},${opacity})`;
                 ctx.lineWidth = 0.15 + depth * 0.8 + alpha * 0.9 + mouseInfluence * 1.2;
                 ctx.beginPath();
-                ctx.moveTo(nodes[i].x, nodes[i].y);
-                ctx.lineTo(nodes[j].x, nodes[j].y);
+                ctx.moveTo(nodes[i].x - camera.x, nodes[i].y - camera.y);
+                ctx.lineTo(nodes[j].x - camera.x, nodes[j].y - camera.y);
                 ctx.stroke();
-                if(Math.random()<0.00018)
-                    {
-                        createPulse(nodes[i],nodes[j]);
-                    }
+                if (Math.random() < 0.00018) {
+                    createPulse(nodes[i], nodes[j]);
+                }
             }
         }
     }
@@ -328,30 +392,29 @@ function drawConnections() {
 /*==================================================
     DRAW ENERGY PULSES
 ==================================================*/
-function drawPulses()
-{
-    for(let i=pulses.length-1;i>=0;i--)
-    {
-        const pulse=pulses[i];
-        pulse.progress+=pulse.speed;
-        if(pulse.progress>=1)
-        {
-            pulses.splice(i,1);
+function drawPulses() {
+    for (let i = pulses.length - 1; i >= 0; i--) {
+        const pulse = pulses[i];
+        pulse.progress += pulse.speed;
+        if (pulse.progress >= 1) {
+            pulses.splice(i, 1);
             continue;
         }
-        const x= pulse.start.x + (pulse.end.x-pulse.start.x)*pulse.progress;
-        const y= pulse.start.y+ (pulse.end.y-pulse.start.y)*pulse.progress;
-        const glow= ctx.createRadialGradient( x, y, 0, x, y, 12 );
-        glow.addColorStop(0,"rgba(255,255,255,.95)");
-        glow.addColorStop(.35,"rgba(150,240,255,.8)");
-        glow.addColorStop(1,"rgba(150,240,255,0)");
-        ctx.fillStyle=glow;
+        const worldX = pulse.start.x + (pulse.end.x - pulse.start.x) * pulse.progress;
+        const worldY = pulse.start.y + (pulse.end.y - pulse.start.y) * pulse.progress;
+        const x = worldX - camera.x;
+        const y = worldY - camera.y;
+        const glow = ctx.createRadialGradient(x, y, 0, x, y, 12);
+        glow.addColorStop(0, "rgba(255,255,255,.95)");
+        glow.addColorStop(.35, "rgba(150,240,255,.8)");
+        glow.addColorStop(1, "rgba(150,240,255,0)");
+        ctx.fillStyle = glow;
         ctx.beginPath();
-        ctx.arc(x,y,12,0,Math.PI*2);
+        ctx.arc(x, y, 12, 0, Math.PI * 2);
         ctx.fill();
-        ctx.fillStyle="white";
+        ctx.fillStyle = "white";
         ctx.beginPath();
-        ctx.arc(x,y,2.2,0,Math.PI*2);
+        ctx.arc(x, y, 2.2, 0, Math.PI * 2);
         ctx.fill();
     }
 }
@@ -359,25 +422,21 @@ function drawPulses()
 /*==================================================
     DRAW CONSTELLATIONS
 ==================================================*/
-function drawConstellations()
-{
-    for(let i=constellations.length-1;i>=0;i--)
-    {
-        const c=constellations[i];
+function drawConstellations() {
+    for (let i = constellations.length - 1; i >= 0; i--) {
+        const c = constellations[i];
         c.age++;
-        if(c.age>c.duration)
-        {
-            constellations.splice(i,1);
+        if (c.age > c.duration) {
+            constellations.splice(i, 1);
             continue;
         }
-        const fade=
+        const fade =
             Math.sin(
-                c.age/c.duration*Math.PI
+                c.age / c.duration * Math.PI
             );
-        for(const node of c.nodes)
-        {
-            node.constellationGlow=Math.max(
-                node.constellationGlow||0,
+        for (const node of c.nodes) {
+            node.constellationGlow = Math.max(
+                node.constellationGlow || 0,
                 fade
             );
         }
@@ -385,14 +444,25 @@ function drawConstellations()
 }
 
 /*==================================================
+    CAMERA UPDATE
+==================================================*/
+function updateCamera() {
+    camera.x += camera.vx;
+    camera.y += camera.vy;
+}
+
+/*==================================================
     ANIMATION LOOP
 ==================================================*/
 function animate() {
+    updateCamera();
+    if (Math.random() < 0.002)
+        createThought();
+    updateThoughts();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    if(Math.random()<0.004)
-        {
-            createConstellation();
-        }
+    if (Math.random() < 0.004) {
+        createConstellation();
+    }
     drawConnections();
     drawPulses();
     drawConstellations();
@@ -413,7 +483,7 @@ window.addEventListener("pointermove", event => {
     mouse.y = event.clientY;
 });
 
-canvas.addEventListener("pointermove", () => {
+canvas.addEventListener("pointerleave", () => {
     mouse.x = -1000;
     mouse.y = -1000;
 });
@@ -444,7 +514,5 @@ window.addEventListener(
 /*==================================================
     INITIALIZE
 ==================================================*/
-
 resizeCanvas();
-
 animate();
