@@ -38,27 +38,6 @@ const ctx = canvas.getContext("2d");
 ====================================================================================*/
 
 /*==================================================
-    MOUSE
-==================================================*/
-const mouse =
-{
-    x: -1000,
-    y: -1000,
-    radius: 160
-};
-
-/*==================================================
-    CAMERA
-==================================================*/
-const camera =
-{
-    x: 0,
-    y: 0,
-    vx: 0.04,
-    vy: 0.015
-};
-
-/*==================================================
     CONFIGURATION - VISUAL TUNING PARAMETERS
 ==================================================*/
 const config =
@@ -88,19 +67,43 @@ const config =
     /* Camera */
     cameraAmplitudeX: 8,
     cameraAmplitudeY: 6,
-    cameraSpeedX: 0.00008,
-    cameraSpeedY: 0.00006,
+    cameraVelocityX: 0.04,   /* Slowly pan to the right */
+    cameraVelocityY: 0.015,   /* Slowly pan to the down */
 
     /* Constellations */
     constellationChance: 0.004,
     constellationLifetime: 400,
 
     /* PULSES */
-    pulseChance:0.0008,             //Curently Not Configured
+    pulseChance: 0.0008,             //Curently Not Configured
 
     /* Network */
     connectionBrightness: 0.55      //Curently Not Configured
 };
+
+/*==================================================
+    MOUSE
+==================================================*/
+const mouse =
+{
+    x: -1000,
+    y: -1000,
+    radius: 160
+};
+
+/*==================================================
+    CAMERA
+==================================================*/
+const camera =
+{
+    //Camera Position
+    x: 0,
+    y: 0,
+    //Camera Velocity
+    vx: config.cameraVelocityX,
+    vy: config.cameraVelocityY
+};
+
 
 /*==================================================
     NEBULA CLASS
@@ -500,7 +503,7 @@ function drawConstellations() {
             constellations.splice(i, 1);
             continue;
         }
-        const fade = Math.sin( c.age / c.duration * Math.PI );
+        const fade = Math.sin(c.age / c.duration * Math.PI);
         for (const node of c.nodes) {
             node.constellationGlow = Math.max(
                 node.constellationGlow || 0,
