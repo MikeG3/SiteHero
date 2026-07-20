@@ -91,16 +91,15 @@ const config =
     cameraSpeedX: 0.00008,
     cameraSpeedY: 0.00006,
 
-
     /* Constellations */
-    constellationChance: 0.0010,
+    constellationChance: 0.004,
     constellationLifetime: 400,
 
     /* PULSES */
-    pulseChance:0.0008,
+    pulseChance:0.0008,             //Curently Not Configured
 
     /* Network */
-    connectionBrightness: 0.55
+    connectionBrightness: 0.55      //Curently Not Configured
 };
 
 /*==================================================
@@ -249,8 +248,7 @@ class Node {
         const coreRadius = this.radius + pulse * 0.4;
 
         // Outer glow
-        let gradient =
-            ctx.createRadialGradient(drawX, drawY, 0, drawX, drawY, glowRadius);
+        let gradient = ctx.createRadialGradient(drawX, drawY, 0, drawX, drawY, glowRadius);
 
         gradient.addColorStop(0, `rgba(180,235,255,${(0.25 + mouseGlow * 0.25) * this.brightness})`);
         gradient.addColorStop(1, "rgba(180,235,255,0)");
@@ -361,7 +359,7 @@ function createConstellation() {
         {
             nodes: group,
             age: 0,
-            duration: 220 + Math.random() * 120
+            duration: config.constellationLifetime + Math.random() * 120
         });
 }
 
@@ -502,10 +500,7 @@ function drawConstellations() {
             constellations.splice(i, 1);
             continue;
         }
-        const fade =
-            Math.sin(
-                c.age / c.duration * Math.PI
-            );
+        const fade = Math.sin( c.age / c.duration * Math.PI );
         for (const node of c.nodes) {
             node.constellationGlow = Math.max(
                 node.constellationGlow || 0,
@@ -579,7 +574,7 @@ function animate() {
         nebula.draw();
     }
     /* Draw Constellation */
-    if (Math.random() < 0.004) {
+    if (Math.random() < config.constellationChance) {
         createConstellation();
     }
     drawConnections();
