@@ -63,16 +63,21 @@ const config =
     opacity2: 0.018,
     nebulaPulse: 0.15,
     nebulaDrift: 0.03,
+    nebulaColorAmplitude: 140,
+    nebulaColorAmplitude2: 90,
 
     /* Camera */
     cameraAmplitudeX: 8,
     cameraAmplitudeY: 6,
-    cameraVelocityX: 0.04,   /* Slowly pan to the right */
-    cameraVelocityY: 0.015,   /* Slowly pan to the down */
+    cameraVelocityX: 0.00,   /* Slowly pan to the right */
+    cameraVelocityY: 0.000,   /* Slowly pan to the down */
 
     /* Constellations */
     constellationChance: 0.004,
     constellationLifetime: 400,
+
+    /* Packets */
+    packetChance: 0.000005,
 
     /* PULSES */
     pulseChance: 0.0008,             //Curently Not Configured
@@ -118,11 +123,17 @@ class Nebula {
         this.speed = 0.001 + Math.random() * 0.002;
         this.driftX = (Math.random() - 0.5) * config.nebulaDrift;
         this.driftY = (Math.random() - 0.5) * config.nebulaDrift;
-        this.color = Math.floor(Math.random() * 3);
+        // Initial colour position.
+        this.hue = Math.random() * Math.PI * 2;
+        // Each nebula changes colour at a different speed.
+        this.hueSpeed = 0.0003 + Math.random() * 0.0005;
     }
 
     update() {
         this.phase += this.speed;
+        //color update
+        this.hue += this.hueSpeed;
+
         this.x += this.driftX;
         this.y += this.driftY;
         if (this.x < -this.radius)
@@ -137,23 +148,9 @@ class Nebula {
 
     draw() {
         const pulse = 0.65 + Math.sin(this.phase) * config.nebulaPulse;
-        let r, g, b;
-        switch (this.color) {
-            case 0:
-                r = 40;
-                g = 140;
-                b = 255;
-                break;
-            case 1:
-                r = 70;
-                g = 220;
-                b = 255;
-                break;
-            default:
-                r = 90;
-                g = 120;
-                b = 255;
-        }
+        const r = 120 + Math.sin(this.hue) * config.nebulaColorAmplitude;
+        const g = 120 + Math.sin(this.hue + 2.094) * config.nebulaColorAmplitude;
+        const b = 220 + Math.sin(this.hue + 4.188) * config.nebulaColorAmplitude2;
         const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius);
         //NEBULA COLOR AND OPACITY VALUES
         gradient.addColorStop(0, `rgba(${r},${g},${b},${config.opacity1 * pulse})`);
@@ -450,11 +447,9 @@ function drawConnections() {
                 }
             }
 
-            if (Math.random() < 0.00002 &&
+            if (Math.random() < config.packetChance &&
                 packets.length < 20) {
-                packets.push(
-                    new Packet(nodes[i], nodes[j])
-                );
+                packets.push( new Packet(nodes[i], nodes[j]) );
             }
 
         }
